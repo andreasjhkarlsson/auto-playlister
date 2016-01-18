@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AutoPlaylister", "src\AutoPlaylister.fsproj", "{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
