@@ -15,7 +15,7 @@ let submissionFeed (reddit: Reddit) subreddit regex  =
     fun () ->
         async {
             return
-                subreddit.Hot.GetListing(25)
+                subreddit.Hot.GetListing(Settings.frontpageSize)
                 |> Seq.choose (fun submission ->
 
                     let regex = new Regex(regex)
@@ -52,15 +52,37 @@ let playlistBuilder auth userId playlistId maxSongs =
             |> Paging.asSeq    
     }
 
+    let removeTrack (track: Track) = async {
+        let! token = Authenticator.get auth
+        return!
+            Playlist.removeTracks userId playlistId [track.id]
+            |> Request.withAuthorization token
+            |> Request.mapResponse ignore
+            |> Request.asyncSend
+    }
+        
+
     let addTrack (track: Track) = async {
 
         let! tracks = currentTracks ()
 
-        if tracks |> Seq.exists (fun existing -> existing.track.id = track.id) then
-            printfn "Track is already present in playlist, skipping"
+        let tracks = tracks |> Array.ofSeq
+
+
+
+        if tracks |> Array.exists (fun existing -> existing.track.id = track.id) then
+            printfn "Track (%s -- %s) is already present in playlist, skipping" track.artists.Head.name track.name
         else
+            if tracks.Length >= Settings.playlistLimit then
+                do!
+                    tracks
+                    |> Array.minBy (fun track -> track.added_at)
+                    |> (fun pt ->
+                        printfn "Playlist length exceeded, removing oldest track (%s -- %s)" pt.track.artists.Head.name pt.track.name
+                        removeTrack pt.track
+                    )
             let! token = Authenticator.get auth
-            printfn "Adding track %s -- %s (%A) to playlist" (List.head track.artists).name track.name track.id
+            printfn "Adding track %s -- %s to playlist" track.artists.Head.name track.name
             return!
                 FSpotify.Playlist.add userId playlistId [track.id]
                 |> Request.withAuthorization token
