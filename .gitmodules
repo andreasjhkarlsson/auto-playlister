@@ -1,0 +1,6 @@
+[submodule "lib/RedditSharp"]
+	path = lib/RedditSharp
+	url = https://github.com/SirCmpwn/RedditSharp
+[submodule "lib/fspotify"]
+	path = lib/fspotify
+	url = https://github.com/rotmoset/fspotify
