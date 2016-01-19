@@ -114,7 +114,9 @@ let playlistBuilder auth userId playlistId maxSongs =
                         printfn "Token expired, refreshing"
                         let! result = Authenticator.refresh auth
                         if not result then
-                            failwith "Could not refresh token, agent is quitting."
+                            let msg = "Could not refresh token, agent is quitting."
+                            printfn "%s" msg
+                            failwith msg
                         else printfn "Token refreshed"
                         mailbox.Post song // Process song again
                         do! processed |> waitForSong
@@ -125,7 +127,9 @@ let playlistBuilder auth userId playlistId maxSongs =
                 |error ->
                     printfn "Error: %A" error
                     do! processed |> Set.add song |> waitForSong
-            else do! processed |> waitForSong
+            else
+                printfn "Song '%s -- %s' in cache, skipping" song.Artist song.Title
+                do! processed |> waitForSong
         }
 
         waitForSong Set.empty
@@ -151,6 +155,7 @@ let main argv =
 
             printfn "Updating playlist"
             songs |> Seq.iter updatePlaylist.Post
+            printfn "Going to sleep (%A)" System.DateTime.Now
         with
         | error ->
             printfn "An error occured. Will try again later. %A" error
