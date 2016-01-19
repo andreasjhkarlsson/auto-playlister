@@ -144,12 +144,16 @@ let main argv =
     let updatePlaylist = playlistBuilder auth Settings.userId Settings.playlistId Settings.playlistLimit
 
     let rec loop () = async {
+        try
         
-        printfn "Fetching frontpage"
-        let! songs = listentothis ()
+            printfn "Fetching frontpage"
+            let! songs = listentothis ()
 
-        printfn "Updating playlist"
-        songs |> Seq.iter updatePlaylist.Post
+            printfn "Updating playlist"
+            songs |> Seq.iter updatePlaylist.Post
+        with
+        | error ->
+            printfn "An error occured. Will try again later. %A" error
 
         do! Async.Sleep Settings.refreshRate
         do! loop ()
