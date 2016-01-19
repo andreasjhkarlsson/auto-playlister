@@ -9,6 +9,7 @@ type Message =
     | Refresh of AsyncReplyChannel<bool>
 
 let control token =
+    let startToken = token
     MailboxProcessor.Start (fun mailbox ->
         let rec handle token = async {
             let! msg = mailbox.Receive ()
@@ -17,7 +18,7 @@ let control token =
                 reply.Reply token
                 do! handle token
             | Refresh reply ->
-                match Authorization.refresh clientId clientSecret token with
+                match Authorization.refresh clientId clientSecret startToken with
                 | Some refresh ->
                     try
                         let! newToken = Request.asyncTrySend refresh
