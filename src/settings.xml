@@ -11,7 +11,7 @@
   <jobs>
     <job id="listentothis-hot" refresh="600">
       <playlist user="" id="" limit="100"/>
-      <subreddit name="listentothis" pattern="(?&lt;artist&gt;.*)-+(?&lt;title&gt;.*?)\[" limit="25"/>
+      <subreddit name="listentothis" pattern="(?&lt;artist&gt;.*?)-+(?&lt;title&gt;.*?)\[" limit="25"/>
     </job>
   </jobs>
 </setting>
