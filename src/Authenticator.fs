@@ -8,8 +8,16 @@ type Message =
     | Get of AsyncReplyChannel<Token> 
     | Refresh of AsyncReplyChannel<bool>
 
-let control token =
-    let startToken = token
+let agent =
+    let auth = settings.Authorization
+
+    let appToken = {
+            access_token = auth.Token.Value
+            token_type = auth.Token.Type
+            expires_in = auth.Token.Expires
+            refresh_token = Some auth.Token.Refresh
+        }
+
     MailboxProcessor.Start (fun mailbox ->
         let rec handle token = async {
             let! msg = mailbox.Receive ()
@@ -18,7 +26,7 @@ let control token =
                 reply.Reply token
                 do! handle token
             | Refresh reply ->
-                match Authorization.refresh clientId clientSecret startToken with
+                match Authorization.refresh auth.Client.Id auth.Client.Secret appToken with
                 | Some refresh ->
                     try
                         let! newToken = Request.asyncTrySend refresh
@@ -30,10 +38,10 @@ let control token =
                     with error -> reply.Reply false
                 | None -> reply.Reply false
         }
-        handle token
+        handle appToken
     )
 
 
-let get (controller: MailboxProcessor<Message>) = controller.PostAndAsyncReply Get
+let get () = agent.PostAndAsyncReply Get
 
-let refresh (controller: MailboxProcessor<Message>) = controller.PostAndAsyncReply Refresh
+let refresh () = agent.PostAndAsyncReply Refresh

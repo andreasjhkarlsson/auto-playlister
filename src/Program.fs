@@ -2,6 +2,7 @@
 open System.Text.RegularExpressions
 open FSpotify
 open RedditSharp
+open Settings
 
 type Song = {
     Artist: string
@@ -10,14 +11,14 @@ type Song = {
 
 let submissionFeed (reddit: Reddit) subreddit regex  =
     let subreddit = reddit.GetSubreddit(subreddit)
-
+    let regex = new Regex(regex)
     let trim (str: string) = str.Trim ()
-    fun () ->
+    fun length ->
         async {
             return
-                subreddit.Hot.GetListing(Settings.frontpageSize)
+                subreddit.Hot.GetListing(length)
                 |> Seq.choose (fun submission ->
-                    let regex = new Regex(regex)
+                    
                     let ``match`` = regex.Match submission.Title
 
                     if ``match``.Success then  
@@ -29,10 +30,10 @@ let submissionFeed (reddit: Reddit) subreddit regex  =
                 )
         }
 
-let playlistBuilder auth userId playlistId maxSongs =
+let playlistBuilder userId playlistId maxSongs =
 
     let findSong (song: Song) = async {
-        let! token = Authenticator.get auth
+        let! token = Authenticator.get ()
         return
             sprintf "track:%s artist:%s" song.Title song.Artist
             |> Search.Query
@@ -45,7 +46,7 @@ let playlistBuilder auth userId playlistId maxSongs =
     }
 
     let currentTracks () = async {
-        let! token = Authenticator.get auth
+        let! token = Authenticator.get ()
         return
             Playlist.tracks userId playlistId
             |> Request.withAuthorization token
@@ -54,7 +55,7 @@ let playlistBuilder auth userId playlistId maxSongs =
     }
 
     let removeTrack (track: Track) = async {
-        let! token = Authenticator.get auth
+        let! token = Authenticator.get ()
         return!
             Playlist.removeTracks userId playlistId [track.id]
             |> Request.withAuthorization token
@@ -74,7 +75,7 @@ let playlistBuilder auth userId playlistId maxSongs =
         if tracks |> Array.exists (fun existing -> existing.track.id = track.id) then
             printfn "Track (%s -- %s) is already present in playlist, skipping" track.artists.Head.name track.name
         else
-            if tracks.Length >= Settings.playlistLimit then
+            if tracks.Length >= maxSongs then
                 do!
                     tracks
                     |> Array.minBy (fun track -> track.added_at)
@@ -82,7 +83,7 @@ let playlistBuilder auth userId playlistId maxSongs =
                         printfn "Playlist length exceeded, removing oldest track (%s -- %s)" pt.track.artists.Head.name pt.track.name
                         removeTrack pt.track
                     )
-            let! token = Authenticator.get auth
+            let! token = Authenticator.get ()
             printfn "Adding track %s -- %s to playlist" track.artists.Head.name track.name
             return!
                 FSpotify.Playlist.add userId playlistId [track.id]
@@ -113,7 +114,7 @@ let playlistBuilder auth userId playlistId maxSongs =
                 | SpotifyError (code, msg) ->
                     if code = "401" then
                         printfn "Token expired, refreshing"
-                        let! result = Authenticator.refresh auth
+                        let! result = Authenticator.refresh ()
                         if not result then
                             let msg = "Could not refresh token, agent is quitting."
                             printfn "%s" msg
@@ -142,17 +143,16 @@ let main argv =
 
     let reddit = new Reddit()
 
-    let listentothis = submissionFeed reddit Settings.subreddit Settings.regex
+    let listentothis = submissionFeed reddit settings.Job.Subreddit.Name settings.Job.Subreddit.Pattern
 
-    let auth = Authenticator.control Settings.token
 
-    let updatePlaylist = playlistBuilder auth Settings.userId Settings.playlistId Settings.playlistLimit
+    let updatePlaylist = playlistBuilder (SpotifyId settings.Job.Playlist.User) (SpotifyId settings.Job.Playlist.Id) settings.Job.Playlist.Limit
 
     let rec loop () = async {
         try
         
             printfn "Fetching frontpage"
-            let! songs = listentothis ()
+            let! songs = listentothis settings.Job.Subreddit.Limit
 
             printfn "Updating playlist"
             songs |> Seq.iter updatePlaylist.Post
@@ -161,7 +161,7 @@ let main argv =
         | error ->
             printfn "An error occured. Will try again later. %A" error
 
-        do! Async.Sleep Settings.refreshRate
+        do! Async.Sleep (settings.Job.Refresh * 1000)
         do! loop ()
     }
 
