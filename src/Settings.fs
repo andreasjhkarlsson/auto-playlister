@@ -13,5 +13,5 @@ let playlistId = SpotifyId "<playlist-id>"
 let playlistLimit = 100
 let refreshRate = 10*60*1000
 let subreddit = "listentothis"
-let regex = @"(?<artist>.*)-+(?<title>.*)\[" 
+let regex = @"(?<artist>.*)-+(?<title>.*?)\[" 
 let frontpageSize = 25
