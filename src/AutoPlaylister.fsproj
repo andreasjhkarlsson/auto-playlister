@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Settings.fs" />
+    <Compile Include="Misc.fs" />
     <Compile Include="Authenticator.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />

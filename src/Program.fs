@@ -4,7 +4,7 @@ open FSpotify
 open RedditSharp
 open Settings
 
-type Song = {
+type Submission = {
     Artist: string
     Title: string
 }
@@ -25,140 +25,175 @@ let submissionFeed (reddit: Reddit) subreddit regex  =
                         { Artist = trim ``match``.Groups.["artist"].Value
                           Title = trim ``match``.Groups.["title"].Value } |> Some
                     else
-                        printfn "Did not match submission (possible discussion or malformed): %s" submission.Title
+                        printfn "Did not match submission pattern: %s" submission.Title
                         None
                 )
         }
 
-let playlistBuilder userId playlistId maxSongs =
-
-    let findSong (song: Song) = async {
-        let! token = Authenticator.get ()
-        return
-            sprintf "track:%s artist:%s" song.Title song.Artist
-            |> Search.Query
-            |> FSpotify.Search.track
-            |> Request.withOptionals (fun o -> {o with limit = Some 1})
-            |> Request.withAuthorization token
-            |> Paging.page
-            |> Paging.asSeq
-            |> Seq.tryPick Some    
-    }
-
-    let currentTracks () = async {
-        let! token = Authenticator.get ()
-        return
-            Playlist.tracks userId playlistId
-            |> Request.withAuthorization token
-            |> Paging.page
-            |> Paging.asSeq    
-    }
-
-    let removeTrack (track: Track) = async {
-        let! token = Authenticator.get ()
-        return!
-            Playlist.removeTracks userId playlistId [track.id]
-            |> Request.withAuthorization token
-            |> Request.mapResponse ignore
-            |> Request.asyncSend
-    }
-        
-
-    let addTrack (track: Track) = async {
-
-        let! tracks = currentTracks ()
-
-        let tracks = tracks |> Array.ofSeq
-
-
-
-        if tracks |> Array.exists (fun existing -> existing.track.id = track.id) then
-            printfn "Track (%s -- %s) is already present in playlist, skipping" track.artists.Head.name track.name
-        else
-            if tracks.Length >= maxSongs then
-                do!
-                    tracks
-                    |> Array.minBy (fun track -> track.added_at)
-                    |> (fun pt ->
-                        printfn "Playlist length exceeded, removing oldest track (%s -- %s)" pt.track.artists.Head.name pt.track.name
-                        removeTrack pt.track
+let search =
+    let agent = MailboxProcessor.Start (fun mailbox ->
+        let rec search (cache: Map<Submission,Track option>) = async {
+            let! ((song,reply): Submission*AsyncReplyChannel<Track option>) = mailbox.Receive ()
+            match cache |> Map.tryFind song with
+            | Some trackIdResult ->
+                trackIdResult |> reply.Reply
+                return! search cache
+            | None ->
+                let! trackResult =
+                    Authenticator.withAuthentication (fun token -> async {
+                            return
+                                sprintf "track:%s artist:%s" song.Title song.Artist
+                                |> Search.Query
+                                |> FSpotify.Search.track
+                                |> Request.withOptionals (fun o -> {o with limit = Some 1})
+                                |> Request.withAuthorization token
+                                |> Paging.page
+                                |> Paging.asSeq
+                                |> Seq.tryPick Some     
+                        }                     
                     )
-            let! token = Authenticator.get ()
-            printfn "Adding track %s -- %s to playlist" track.artists.Head.name track.name
-            return!
-                FSpotify.Playlist.add userId playlistId [track.id]
+
+                trackResult |> reply.Reply
+                return! cache |> Map.add song trackResult |> search    
+        }
+
+        Misc.supervise <| search Map.empty
+    )
+
+    fun song -> agent.PostAndAsyncReply (fun reply -> song,reply)
+
+
+module Playlist =
+    
+    type Action =
+        | Exists of Track*AsyncReplyChannel<bool>
+        | Add of Track
+        | Remove of Track
+        | Count of AsyncReplyChannel<int>
+        | Tracks of AsyncReplyChannel<PlaylistTrack seq>
+
+    type Agent = MailboxProcessor<Action>
+
+    let exists track (agent: Agent) = agent.PostAndAsyncReply (fun reply -> Exists(track, reply))
+
+    let add track (agent: Agent) = agent.Post (Add track)
+
+    let count (agent: Agent) = agent.PostAndAsyncReply Count
+
+    let remove track (agent: Agent) = agent.Post (Remove track)
+
+    let tracks (agent: Agent) = agent.PostAndAsyncReply Tracks
+
+    let load userId playlistId: Agent =
+
+        let loadTracks = 
+            Authenticator.withAuthentication (fun token -> async {
+                return
+                    Playlist.tracks userId playlistId
+                    |> Request.withAuthorization token
+                    |> Paging.page
+                    |> Paging.asSeq                
+            })
+
+        let removeTrack (track: Track) =
+            Authenticator.withAuthentication (fun token ->
+                Playlist.removeTracks userId playlistId [track.id]
                 |> Request.withAuthorization token
                 |> Request.mapResponse ignore
                 |> Request.asyncSend
-    }
+            )
 
-    let tryAddSong (song: Song) = async {
-        let! track = findSong song
-        match track with
-        | Some track ->
-            do! addTrack track
-        | None ->
-            printfn "Track: '%s -- %s' was not found" song.Artist song.Title    
-    }    
+        let addTrack (track: Track) =
+            Authenticator.withAuthentication (fun token ->
+                FSpotify.Playlist.add userId playlistId [track.id]
+                |> Request.withAuthorization token
+                |> Request.mapResponse ignore
+                |> Request.asyncSend                
+            )
 
-    MailboxProcessor.Start (fun mailbox ->
+        let asCache (tracks: PlaylistTrack seq) =
+            tracks 
+            |> Seq.map (fun track -> track.track.id)
+            |> Set.ofSeq
 
-        let rec waitForSong (processed: Set<Song>) = async {
-            let! (song: Song) = mailbox.Receive ()
-            
-            if not (processed |> Set.contains song) then
-                try
-                    do! tryAddSong song
-                    do! processed |> Set.add song |> waitForSong
-                with
-                | SpotifyError (code, msg) ->
-                    if code = "401" then
-                        printfn "Token expired, refreshing"
-                        let! result = Authenticator.refresh ()
-                        if not result then
-                            let msg = "Could not refresh token, agent is quitting."
-                            printfn "%s" msg
-                            failwith msg
-                        else printfn "Token refreshed"
-                        mailbox.Post song // Process song again
-                        do! processed |> waitForSong
-                    else
-                        do! processed |> Set.add song |> waitForSong
-                        printfn "Spotify error: %s: %s" code msg
-                    
-                |error ->
-                    printfn "Error: %A" error
-                    do! processed |> Set.add song |> waitForSong
-            else
-                printfn "Song '%s -- %s' in cache, skipping" song.Artist song.Title
-                do! processed |> waitForSong
-        }
+        MailboxProcessor.Start(fun mailbox ->
+            let rec listen (cache: Set<SpotifyId>) = async {
+                let! message = mailbox.Receive ()
+                match message with
+                | Exists (track, reply) ->
+                    cache |> Set.contains track.id |> reply.Reply
+                    return! listen cache
+                | Add track ->
+                    do! addTrack track
+                    return! cache |> Set.add track.id |> listen
+                | Remove track ->
+                    do! removeTrack track
+                    return! cache |> Set.remove track.id |> listen
+                | Count reply ->
+                    reply.Reply cache.Count
+                    return! listen cache
+                | Tracks reply ->
+                    let! tracks = loadTracks
+                    reply.Reply tracks
+                    // We may as well refresh the cache while we have a fresh list
+                    return! listen (asCache tracks) 
 
-        waitForSong Set.empty
-    )
+            }
+            async {
+                let! existing = loadTracks
+                return!
+                    existing
+                    |> Seq.map (fun track -> track.track.id)
+                    |> Set.ofSeq
+                    |> listen
+            } |> Misc.supervise
+        )
 
 let runJob reddit (job: Settings.Job) =
     let stream = submissionFeed reddit job.Subreddit.Name job.Subreddit.Pattern
 
-    let playlist = playlistBuilder (SpotifyId job.Playlist.User) (SpotifyId job.Playlist.Id) job.Playlist.Limit 
+    let playlist = Playlist.load (SpotifyId job.Playlist.User) (SpotifyId job.Playlist.Id)
 
-    let rec loop () = async {
+    let trimPlaylist () = async {
+        let! count = playlist |> Playlist.count
+        if count > job.Playlist.Limit then
+            let! tracks = playlist |> Playlist.tracks
+            let oldest = tracks |> Seq.minBy (fun track -> track.added_at)
+            printfn "Playlist limit reached. Removing track '%s'" oldest.track.name
+            do playlist |> Playlist.remove oldest.track
+    }
+
+    let rec run () = async {
         try
-            printfn "Fetching frontpage for %s" job.Subreddit.Name
             let! songs = stream job.Subreddit.Limit
 
-            printfn "Updating playlist"
-            songs |> Seq.iter playlist.Post
+            for song in songs do
+
+                let! track = search song
+
+                match track with
+                | Some track ->
+                    let! exists = playlist |> Playlist.exists track
+                    match exists with
+                    | true ->
+                        printfn "Skipping: '%s' -- '%s' as it's already added to playlist" song.Artist song.Title
+                    | false ->
+                        printfn "Adding: '%s' -- '%s' to playlist" song.Artist song.Title
+                        do playlist |> Playlist.add track
+                        do! trimPlaylist ()
+                | None ->
+                    printfn "Skipping: '%s' -- '%s' as it's not available on spotify" song.Artist song.Title
+
             printfn "Going to sleep (%A)" System.DateTime.Now
         with
         | error ->
             printfn "An error occured. Will try again later. %A" error
 
         do! Async.Sleep (job.Refresh * 1000)
-        do! loop ()
+        do! run ()
     }
 
-    loop ()
+    run ()
 
 [<EntryPoint>]
 let main argv = 

@@ -38,10 +38,25 @@ let agent =
                     with error -> reply.Reply false
                 | None -> reply.Reply false
         }
-        handle appToken
+        Misc.supervise <| handle appToken
     )
 
 
-let get () = agent.PostAndAsyncReply Get
-
-let refresh () = agent.PostAndAsyncReply Refresh
+let withAuthentication operation = async {
+    let! token = agent.PostAndAsyncReply Get
+    try
+        return! operation token
+    with
+    | SpotifyError (code, msg) as error ->
+        if code = "401" then
+            printfn "Token expired. Refreshing..."
+            let! refreshSucceeded = agent.PostAndAsyncReply Refresh
+            if refreshSucceeded then
+                printfn "Token refreshed!"
+                let! newToken = agent.PostAndAsyncReply Get
+                return! operation newToken
+            else
+                printfn "Could not refresh token"
+                return failwith "Could not refresh token"
+        else return raise error
+}
