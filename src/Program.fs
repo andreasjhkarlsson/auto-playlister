@@ -17,14 +17,15 @@ let submissionFeed (reddit: Reddit) subreddit regex  =
             return
                 subreddit.Hot.GetListing(Settings.frontpageSize)
                 |> Seq.choose (fun submission ->
-
                     let regex = new Regex(regex)
                     let ``match`` = regex.Match submission.Title
 
                     if ``match``.Success then  
                         { Artist = trim ``match``.Groups.["artist"].Value
                           Title = trim ``match``.Groups.["title"].Value } |> Some
-                    else None
+                    else
+                        printfn "Did not match submission (possible discussion or malformed): %s" submission.Title
+                        None
                 )
         }
 
