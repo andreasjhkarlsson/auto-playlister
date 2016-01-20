@@ -137,34 +137,35 @@ let playlistBuilder userId playlistId maxSongs =
         waitForSong Set.empty
     )
 
-[<EntryPoint>]
-let main argv = 
-    printfn "%A" argv
+let runJob reddit (job: Settings.Job) =
+    let stream = submissionFeed reddit job.Subreddit.Name job.Subreddit.Pattern
 
-    let reddit = new Reddit()
-
-    let listentothis = submissionFeed reddit settings.Job.Subreddit.Name settings.Job.Subreddit.Pattern
-
-
-    let updatePlaylist = playlistBuilder (SpotifyId settings.Job.Playlist.User) (SpotifyId settings.Job.Playlist.Id) settings.Job.Playlist.Limit
+    let playlist = playlistBuilder (SpotifyId job.Playlist.User) (SpotifyId job.Playlist.Id) job.Playlist.Limit 
 
     let rec loop () = async {
         try
-        
-            printfn "Fetching frontpage"
-            let! songs = listentothis settings.Job.Subreddit.Limit
+            printfn "Fetching frontpage for %s" job.Subreddit.Name
+            let! songs = stream job.Subreddit.Limit
 
             printfn "Updating playlist"
-            songs |> Seq.iter updatePlaylist.Post
+            songs |> Seq.iter playlist.Post
             printfn "Going to sleep (%A)" System.DateTime.Now
         with
         | error ->
             printfn "An error occured. Will try again later. %A" error
 
-        do! Async.Sleep (settings.Job.Refresh * 1000)
+        do! Async.Sleep (job.Refresh * 1000)
         do! loop ()
     }
 
-    loop () |> Async.RunSynchronously
+    loop ()
+
+[<EntryPoint>]
+let main argv = 
+    printfn "Bot started"
+
+    let reddit = new Reddit()
+
+    runJob reddit settings.Job |> Async.RunSynchronously
 
     0
