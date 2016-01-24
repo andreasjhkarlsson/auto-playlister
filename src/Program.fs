@@ -1,4 +1,5 @@
 ﻿
+open System
 open System.Text.RegularExpressions
 open FSpotify
 open RedditSharp
@@ -54,23 +55,25 @@ let search =
                     )
 
                 trackResult |> reply.Reply
-                return! cache |> Map.add song trackResult |> search    
+                return! cache |> Map.add song trackResult |> search cacheAge 
         }
 
-        Misc.supervise <| search Map.empty
+        Misc.supervise <| search DateTime.Now Map.empty 
     )
 
     fun song -> agent.PostAndAsyncReply (fun reply -> song,reply)
 
 
 module Playlist =
+
+    type Item = {Track: Track; Added: DateTime}
     
     type Action =
         | Exists of Track*AsyncReplyChannel<bool>
         | Add of Track
         | Remove of Track
         | Count of AsyncReplyChannel<int>
-        | Tracks of AsyncReplyChannel<PlaylistTrack seq>
+        | Tracks of AsyncReplyChannel<Item list>
 
     type Agent = MailboxProcessor<Action>
 
@@ -113,30 +116,31 @@ module Playlist =
 
         let asCache (tracks: PlaylistTrack seq) =
             tracks 
-            |> Seq.map (fun track -> track.track.id)
-            |> Set.ofSeq
+            |> Seq.map (fun track -> track.track.id, {Track = track.track; Added = track.added_at})
+            |> Map.ofSeq
 
         MailboxProcessor.Start(fun mailbox ->
-            let rec listen (cache: Set<SpotifyId>) = async {
+            let rec listen (cache: Map<SpotifyId,Item>) = async {
                 let! message = mailbox.Receive ()
                 match message with
                 | Exists (track, reply) ->
-                    cache |> Set.contains track.id |> reply.Reply
+                    cache |> Map.containsKey track.id |> reply.Reply
                     return! listen cache
                 | Add track ->
                     do! addTrack track
-                    return! cache |> Set.add track.id |> listen
+                    return! cache |> Map.add track.id {Track = track; Added = DateTime.Now} |> listen
                 | Remove track ->
                     do! removeTrack track
-                    return! cache |> Set.remove track.id |> listen
+                    return! cache |> Map.remove track.id |> listen
                 | Count reply ->
                     reply.Reply cache.Count
                     return! listen cache
                 | Tracks reply ->
-                    let! tracks = loadTracks
-                    reply.Reply tracks
-                    // We may as well refresh the cache while we have a fresh list
-                    return! listen (asCache tracks) 
+                    cache
+                    |> Map.toList
+                    |> List.map snd
+                    |> reply.Reply
+                    return! listen cache
 
             }
             async {
@@ -154,9 +158,9 @@ let runJob reddit (job: Settings.Job) =
         let! count = playlist |> Playlist.count
         if count > job.Playlist.Limit then
             let! tracks = playlist |> Playlist.tracks
-            let oldest = tracks |> Seq.minBy (fun track -> track.added_at)
-            printfn "Playlist limit reached. Removing track '%s'" oldest.track.name
-            do playlist |> Playlist.remove oldest.track
+            let oldest = tracks |> Seq.minBy (fun item -> item.Added)
+            printfn "Playlist limit reached. Removing track '%s'" oldest.Track.name
+            do playlist |> Playlist.remove oldest.Track
     }
 
     let rec run () = async {
