@@ -141,11 +141,7 @@ module Playlist =
             }
             async {
                 let! existing = loadTracks
-                return!
-                    existing
-                    |> Seq.map (fun track -> track.track.id)
-                    |> Set.ofSeq
-                    |> listen
+                return! existing |> asCache |> listen
             } |> Misc.supervise
         )
 
