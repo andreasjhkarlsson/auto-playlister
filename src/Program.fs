@@ -32,13 +32,19 @@ let submissionFeed (reddit: Reddit) subreddit regex  =
         }
 
 let search =
+    
     let agent = MailboxProcessor.Start (fun mailbox ->
-        let rec search (cache: Map<Submission,Track option>) = async {
+        let rec search (cacheAge: DateTime) (cache: Map<Submission,Track option>) = async {
+            
+            if (DateTime.Now - cacheAge).TotalDays > 1.0 then
+                printfn "Clearing old search cache"
+                return! search DateTime.Now Map.empty
+
             let! ((song,reply): Submission*AsyncReplyChannel<Track option>) = mailbox.Receive ()
             match cache |> Map.tryFind song with
             | Some trackIdResult ->
                 trackIdResult |> reply.Reply
-                return! search cache
+                return! search cacheAge cache
             | None ->
                 let! trackResult =
                     Authenticator.withAuthentication (fun token -> async {
