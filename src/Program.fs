@@ -160,13 +160,14 @@ let runJob reddit (job: Settings.Job) =
 
     let playlist = Playlist.load (SpotifyId job.Playlist.User) (SpotifyId job.Playlist.Id)
 
-    let trimPlaylist () = async {
+    let rec trimPlaylist () = async {
         let! count = playlist |> Playlist.count
         if count > job.Playlist.Limit then
             let! tracks = playlist |> Playlist.tracks
             let oldest = tracks |> Seq.minBy (fun item -> item.Added)
             printfn "Playlist limit reached. Removing track '%s'" oldest.Track.name
             do playlist |> Playlist.remove oldest.Track
+            do! trimPlaylist ()
     }
 
     let rec run () = async {
