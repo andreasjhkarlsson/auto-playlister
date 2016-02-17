@@ -6,6 +6,6 @@ let rec supervise workflow = async {
     with
     | error ->
         printfn "Trapped uncaught exception in workflow: %s" error.Message
-        printfn "Restarting workflow (note: agent state is reset)..."
-        return! supervise workflow
+        printfn "Stacktrace: %s" error.StackTrace
+        do System.Environment.Exit(1)
 }

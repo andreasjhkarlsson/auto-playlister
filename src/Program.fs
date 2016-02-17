@@ -49,7 +49,7 @@ let search =
                 let! trackResult =
                     Authenticator.withAuthentication (fun token -> async {
                             return
-                                sprintf "track:%s artist:%s" song.Title song.Artist
+                                sprintf "track:\"%s\" artist:\"%s\"" song.Title song.Artist
                                 |> Search.Query
                                 |> FSpotify.Search.track
                                 |> Request.withOptionals (fun o -> {o with limit = Some 1})
