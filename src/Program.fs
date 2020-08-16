@@ -5,6 +5,8 @@ open FSpotify
 open RedditSharp
 open Settings
 
+let inline isNull (x:^T when ^T : not struct) = obj.ReferenceEquals (x, null)
+
 type Submission = {
     Artist: string
     Title: string
@@ -122,6 +124,7 @@ module Playlist =
 
         let asCache (tracks: PlaylistTrack seq) =
             tracks 
+            |> Seq.filter (fun track -> track.track |> isNull |> not)
             |> Seq.map (fun track -> track.track.id, {Track = track.track; Added = track.added_at})
             |> Map.ofSeq
 
