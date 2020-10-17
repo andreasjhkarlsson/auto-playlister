@@ -3,16 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AutoPlaylister", "src\AutoPlaylister.fsproj", "{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A368CB75-75F0-4489-904D-B5CEBB0FE624} = {A368CB75-75F0-4489-904D-B5CEBB0FE624}
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedditSharp", "lib\RedditSharp\RedditSharp\RedditSharp.csproj", "{A368CB75-75F0-4489-904D-B5CEBB0FE624}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSpotify", "lib\fspotify\src\FSpotify.fsproj", "{D3AD13B4-4DD4-4ADA-9304-C2BC34F4EEEF}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Newtonsoft.Json.FSharp", "lib\fspotify\lib\Newtonsoft.Json.FSharp\src\JsonNet\Newtonsoft.Json.FSharp.fsproj", "{0507D318-B725-4BD8-A629-DF5A3EA644AE}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AutoPlaylister", "src\AutoPlaylister.fsproj", "{86B7EB73-5C57-4CC0-BC71-669E6C69E49F}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AutoPlaylister-Console", "src\console\AutoPlaylister-Console.fsproj", "{CC07BD67-71C9-4737-A3B5-1208FA227D42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -36,6 +31,14 @@ Global
 		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86B7EB73-5C57-4CC0-BC71-669E6C69E49F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86B7EB73-5C57-4CC0-BC71-669E6C69E49F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86B7EB73-5C57-4CC0-BC71-669E6C69E49F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86B7EB73-5C57-4CC0-BC71-669E6C69E49F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC07BD67-71C9-4737-A3B5-1208FA227D42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC07BD67-71C9-4737-A3B5-1208FA227D42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC07BD67-71C9-4737-A3B5-1208FA227D42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC07BD67-71C9-4737-A3B5-1208FA227D42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

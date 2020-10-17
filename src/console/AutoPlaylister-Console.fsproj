@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>AutoPlaylister_Console</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\settings.xml" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup />
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Data" Version="3.3.3" />
+    <PackageReference Include="NodaTime" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\lib\fspotify\lib\Newtonsoft.Json.FSharp\src\JsonNet\Newtonsoft.Json.FSharp.fsproj" />
+    <ProjectReference Include="..\..\lib\fspotify\src\FSpotify.fsproj" />
+    <ProjectReference Include="..\..\lib\RedditSharp\RedditSharp\RedditSharp.csproj" />
+    <ProjectReference Include="..\AutoPlaylister.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="FSharp.Data.DesignTime">
+      <HintPath>..\..\packages\FSharp.Data.2.2.5\lib\net40\FSharp.Data.DesignTime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
