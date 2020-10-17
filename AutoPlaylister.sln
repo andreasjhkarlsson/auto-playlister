@@ -1,17 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AutoPlaylister", "src\AutoPlaylister.fsproj", "{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624} = {A368CB75-75F0-4489-904D-B5CEBB0FE624}
-		{A45308DB-8C00-4D8D-B94C-C657028CAE48} = {A45308DB-8C00-4D8D-B94C-C657028CAE48}
 	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSpotify", "lib\fspotify\src\FSpotify.fsproj", "{A45308DB-8C00-4D8D-B94C-C657028CAE48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedditSharp", "lib\RedditSharp\RedditSharp\RedditSharp.csproj", "{A368CB75-75F0-4489-904D-B5CEBB0FE624}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedditSharp", "lib\RedditSharp\RedditSharp\RedditSharp.csproj", "{A368CB75-75F0-4489-904D-B5CEBB0FE624}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSpotify", "lib\fspotify\src\FSpotify.fsproj", "{D3AD13B4-4DD4-4ADA-9304-C2BC34F4EEEF}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Newtonsoft.Json.FSharp", "lib\fspotify\lib\Newtonsoft.Json.FSharp\src\JsonNet\Newtonsoft.Json.FSharp.fsproj", "{0507D318-B725-4BD8-A629-DF5A3EA644AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,16 +24,23 @@ Global
 		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AFA0B0AF-25D6-4107-B90E-03FE8B9575DC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A45308DB-8C00-4D8D-B94C-C657028CAE48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A45308DB-8C00-4D8D-B94C-C657028CAE48}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A45308DB-8C00-4D8D-B94C-C657028CAE48}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A45308DB-8C00-4D8D-B94C-C657028CAE48}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3AD13B4-4DD4-4ADA-9304-C2BC34F4EEEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3AD13B4-4DD4-4ADA-9304-C2BC34F4EEEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3AD13B4-4DD4-4ADA-9304-C2BC34F4EEEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3AD13B4-4DD4-4ADA-9304-C2BC34F4EEEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0507D318-B725-4BD8-A629-DF5A3EA644AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3C998889-485D-46FA-9152-AA6FAB5D2D8F}
 	EndGlobalSection
 EndGlobal

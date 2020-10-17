@@ -4,6 +4,8 @@ open System.Text.RegularExpressions
 open FSpotify
 open RedditSharp
 open Settings
+open System.Linq
+open System.Collections.Generic
 
 let inline isNull (x:^T when ^T : not struct) = obj.ReferenceEquals (x, null)
 
@@ -12,14 +14,32 @@ type Submission = {
     Title: string
 }
 
+module AsyncEnumerator =
+    let rec ToSeq<'a> (enumerator: IAsyncEnumerator<'a>) = seq {
+        let maybeAnElement =
+            async {
+                let! yes = enumerator.MoveNext() |> Async.AwaitTask 
+                if yes then return Some enumerator.Current else return None
+            } |> Async.RunSynchronously
+        match maybeAnElement with
+        | Some element ->
+            yield element
+            yield! ToSeq<'a> enumerator
+        | None ->
+            ()
+    }
+
+
 let submissionFeed (reddit: Reddit) subreddit regex  =
-    let subreddit = reddit.GetSubreddit(subreddit)
     let regex = new Regex(regex)
     let trim (str: string) = str.Trim ()
     fun length ->
         async {
-            return
-                subreddit.Hot.GetListing(length)
+            let! subreddit = reddit.GetSubredditAsync(subreddit) |> Async.AwaitTask
+
+            return  
+                subreddit.GetPosts(Things.Subreddit.Sort.Hot, length).GetEnumerator()
+                |> AsyncEnumerator.ToSeq
                 |> Seq.choose (fun submission ->
                     
                     let ``match`` = regex.Match submission.Title
@@ -211,6 +231,8 @@ let main argv =
 
     let reddit = new Reddit()
 
-    runJob reddit settings.Job |> Async.RunSynchronously
-
+    while true do
+        try runJob reddit settings.Job |> Async.RunSynchronously
+        with e ->
+            printfn "There was an error in the bot, restarting..."
     0
