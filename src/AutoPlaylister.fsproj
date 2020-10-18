@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Settings.fs" />
     <Compile Include="Misc.fs" />
     <Compile Include="Authenticator.fs" />
     <Compile Include="Job.fs" />

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Content Include="..\settings.xml" />
+    <Content Include="settings.xml" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
