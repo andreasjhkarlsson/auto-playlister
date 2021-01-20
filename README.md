@@ -4,10 +4,12 @@
 This program monitors frontpage submissions for specific subreddits on reddit.com and updates a spotify playlist accordingly. 
 
 #### Building
-Build using Visual Studio (2015) or xbuild (mono)
+Build using Visual Studio
 
 #### Customizing
-All settings that can be configured are found in [settings.xml](https://github.com/rotmoset/auto-playlister/blob/master/src/settings.xml)
+For the console application, the settings are found in https://github.com/andreasjhkarlsson/auto-playlister/blob/master/src/console/settings.xml
+
+For the AWS lambda runner, check https://github.com/andreasjhkarlsson/auto-playlister/blob/master/src/lambda/Function.fs for the keys and configure them in the aws console.
 
 #### How do I get an auth token for the spotify api?
 To use this program you need an auth token to authenticate the requests to the spotify web api. This token needs to be added to settings.xml
